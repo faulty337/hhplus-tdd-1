@@ -4,6 +4,8 @@ import io.hhplus.tdd.database.UserPointTable;
 import io.hhplus.tdd.point.UserPoint;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class UserPointRepositoryImpl implements UserPointRepository{
 
@@ -15,7 +17,8 @@ public class UserPointRepositoryImpl implements UserPointRepository{
     }
 
     @Override
-    public UserPoint findById(long id) {
-        return userPointTable.selectById(id);
+    public Optional<UserPoint> findById(long id) {
+
+        return Optional.of(userPointTable.selectById(id));
     }
 }
