@@ -18,7 +18,8 @@ public class UserPointServiceImpl implements UserPointService{
 
     @Override
     public UserPointResponse getUserPoint(long userId) {
-        UserPoint userPoint = userPointRepository.findById(userId);
+        //UserPointTable 내부 selectById()함수에서 getOrDefault()를 사용하기에 절대 없는 유저에 대한 상황이 나올 수 없음.
+        UserPoint userPoint = userPointRepository.findById(userId).orElseThrow(RuntimeException::new);
         return new UserPointResponse(userPoint.id(), userPoint.point());
     }
 }

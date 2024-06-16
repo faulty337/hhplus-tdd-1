@@ -21,4 +21,11 @@ public class UserPointRepositoryImpl implements UserPointRepository{
 
         return Optional.of(userPointTable.selectById(id));
     }
+
+    @Override
+    public Optional<UserPoint> save(UserPoint userPoint) {
+        return Optional.of(userPointTable.insertOrUpdate(userPoint.id(), userPoint.point()));
+    }
+
+
 }
