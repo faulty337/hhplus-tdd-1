@@ -88,6 +88,7 @@ class PointControllerTest {
                 .andExpect(status().is5xxServerError());
     }
 
+    //기본 API 작동 테스트
     @Test
     @DisplayName("포인트 로그 조회 - 작동 테스트")
     void pointHistoryAPISuccessTest() throws Exception {
@@ -99,6 +100,8 @@ class PointControllerTest {
                 .andExpect(jsonPath("$[0].amount").value(20));
     }
 
+    //userId의 자료형(long)이외 값에 대한 예외 처리
+    //원래는 CustomException을 Throw하고 싶었으나 시간상 예외에 대한 테스트만 구현
     @Test
     @DisplayName("포인트 로그 조회 - 정수 이외 테스트")
     void pointHistoryAPIParameterExceptionTest() throws Exception {

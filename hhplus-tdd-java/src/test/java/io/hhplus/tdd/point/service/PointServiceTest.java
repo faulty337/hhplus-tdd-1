@@ -76,6 +76,7 @@ class PointServiceTest {
         });
     }
 
+    //기본 포인트 로그 조회 Service 테스트
     @Test
     @DisplayName("포인트 로그 조회 - 서비스 로직 작동 테스트")
     void getPointHistorySuccessPointTest() {
