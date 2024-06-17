@@ -1,7 +1,7 @@
 package io.hhplus.tdd.point;
 
 import io.hhplus.tdd.point.dto.UserPointResponse;
-import io.hhplus.tdd.point.service.UserPointService;
+import io.hhplus.tdd.point.service.PointService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +14,10 @@ public class PointController {
 
     private static final Logger log = LoggerFactory.getLogger(PointController.class);
 
-    private final UserPointService userPointService;
+    private final PointService pointService;
 
-    public PointController(UserPointService userPointService) {
-        this.userPointService = userPointService;
+    public PointController(PointService userPointService) {
+        this.pointService = userPointService;
     }
 
     /**
@@ -27,7 +27,7 @@ public class PointController {
     public UserPointResponse point(
             @PathVariable long id
     ) {
-        UserPointResponse UserPointResponse = userPointService.getUserPoint(id);
+        UserPointResponse UserPointResponse = pointService.getUserPoint(id);
         return UserPointResponse;
     }
 

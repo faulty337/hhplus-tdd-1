@@ -22,7 +22,7 @@ class PointServiceTest {
     private UserPointRepositoryImpl userPointRepository;
 
     @InjectMocks
-    private UserPointServiceImpl userPointService;
+    private PointServiceImpl userPointService;
     private long userId;
     private long point;
     @BeforeEach

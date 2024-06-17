@@ -50,7 +50,7 @@ class PointControllerTest {
 
     @Test
     @DisplayName("포인트 조회 - 작동 테스트")
-    void pointAPITest() throws Exception {
+    void pointAPISuccessTest() throws Exception {
 
         mockMvc.perform(get("/point/{id}", userId))
                 .andExpect(status().isOk())
