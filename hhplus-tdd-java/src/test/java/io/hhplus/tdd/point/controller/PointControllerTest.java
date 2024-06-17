@@ -58,6 +58,8 @@ class PointControllerTest {
 
     }
 
+
+    //기본 API의 작동 테스트
     @Test
     @DisplayName("포인트 조회 - 작동 테스트")
     void pointAPISuccessTest() throws Exception {
@@ -69,6 +71,8 @@ class PointControllerTest {
                 .andExpect(jsonPath("$.userPoint").value(point));
     }
 
+    //userId의 자료형(long)이외 값에 대한 예외 처리
+    //원래는 CustomException을 Throw하고 싶었으나 시간상 예외에 대한 테스트만 구현
     @Test
     @DisplayName("포인트 조회 - 정수 이외 테스트")
     void pointAPIParameterExceptionTest() throws Exception {
@@ -77,6 +81,9 @@ class PointControllerTest {
                 .andExpect(status().is4xxClientError());
     }
 
+    //없는 userId에 대한 예외 처리
+    //다른 분들께 물어보니 보통 없는 userId가 들어오는 경우를 제외.. 했다고는 하지만 기본적으로 있어야 하는 예외라고 생각
+    //Optional로 감싸 없는 경우를 강제로 생성(원래는 UserPointTable에 getOrDefault 함수로 인해 없는 경우 절대X)
     @Test
     @DisplayName("포인트 조회 - 없는 사용자 테스트")
     void pointAPINotFoundUserIdExceptionTest() throws Exception {

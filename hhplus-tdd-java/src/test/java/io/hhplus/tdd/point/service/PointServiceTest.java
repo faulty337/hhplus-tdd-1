@@ -50,6 +50,7 @@ class PointServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
+    //기본 Service의 작동 테스트
     @Test
     @DisplayName("포인트 조회 - 서비스 로직 작동 테스트")
     void getUserPointSuccessPointTest() {
@@ -65,6 +66,9 @@ class PointServiceTest {
         verify(userPointRepository, times(1)).findById(userId);
     }
 
+    //없는 userId에 대한 예외 테스트
+    //다른분들은 보통 Service전 Security 단에서 유효성 검증이 끝난다고함
+    //해당부분은 의미.. 있을지는 모를 테스트 코드
     @Test
     @DisplayName("포인트 조회 - Not Found UserId Exception 테스트")
     void getUserPointNotFoundUserIdTest(){
