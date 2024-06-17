@@ -2,9 +2,11 @@ package io.hhplus.tdd.point.repository;
 
 import io.hhplus.tdd.database.PointHistoryTable;
 import io.hhplus.tdd.point.PointHistory;
+import io.hhplus.tdd.point.TransactionType;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class PointHistoryRepositoryImpl implements PointHistoryRepository{
@@ -18,4 +20,11 @@ public class PointHistoryRepositoryImpl implements PointHistoryRepository{
     public List<PointHistory> findAllByUserId(long userId) {
         return pointHistoryTable.selectAllByUserId(userId);
     }
+
+    @Override
+    public Optional<PointHistory> save(long userid, long amount, TransactionType type) {
+        return Optional.of(pointHistoryTable.insert(userid, amount, type, System.currentTimeMillis()));
+    }
+
+
 }

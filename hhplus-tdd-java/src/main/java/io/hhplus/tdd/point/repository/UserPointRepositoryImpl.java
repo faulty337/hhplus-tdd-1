@@ -27,5 +27,10 @@ public class UserPointRepositoryImpl implements UserPointRepository{
         return Optional.of(userPointTable.insertOrUpdate(userPoint.id(), userPoint.point()));
     }
 
+    @Override
+    public UserPoint update(long userId, long amount) {
+        return userPointTable.insertOrUpdate(userId, amount);
+    }
+
 
 }
