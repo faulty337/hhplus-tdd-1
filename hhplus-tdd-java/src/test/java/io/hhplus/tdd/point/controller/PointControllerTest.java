@@ -1,8 +1,12 @@
 package io.hhplus.tdd.point.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.hhplus.tdd.CustomException;
+import io.hhplus.tdd.ErrorCode;
 import io.hhplus.tdd.point.PointHistory;
 import io.hhplus.tdd.point.TransactionType;
 import io.hhplus.tdd.point.UserPoint;
+import io.hhplus.tdd.point.dto.UserPointChargeResponse;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,16 +16,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -36,25 +43,39 @@ class PointControllerTest {
     @MockBean
     private PointHistoryRepository pointHistoryRepository;
 
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private long userId;
 
     private long point;
 
+    private long amount;
+
     private final List<PointHistory> pointHistoryList = new ArrayList<>();
+
+    private UserPointChargeResponse userPointChargeResponse;
+
+    private UserPoint userPoint;
+
+    private PointHistory pointHistory;
 
     @BeforeEach
     public void setUP(){
         userId = 1L;
         point = 100L;
-
+        amount = 20L;
         for(int i = 0; i < 5; i++){
             pointHistoryList.add(new PointHistory(i, userId, 20, TransactionType.CHARGE, System.currentTimeMillis()));
         }
-
-        UserPoint userPoint = new UserPoint(userId, point);
+        pointHistory = new PointHistory(1L, userId, amount, TransactionType.CHARGE, System.currentTimeMillis());
+        userPointChargeResponse = new UserPointChargeResponse(userId, 100, 80, 20);
+        userPoint = new UserPoint(userId, point);
         when(userPointRepository.findById(userId)).thenReturn(Optional.of(userPoint));
         when(pointHistoryRepository.findAllByUserId(userId)).thenReturn(pointHistoryList);
+        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(Optional.of(pointHistory));
+        when(userPointRepository.update(userId, point + amount)).thenReturn(new UserPoint(userId, point + amount));
+
 
     }
 
@@ -115,6 +136,51 @@ class PointControllerTest {
         String userId = "테스트";
         mockMvc.perform(get("/point/{id}/histories", userId))
                 .andExpect(status().is4xxClientError());
+    }
+
+    //기본 API 작동 테스트
+    @Test
+    @DisplayName("포인트 충전 - 작동 테스트")
+    void chargePointAPISuccessTest() throws Exception {
+
+        mockMvc.perform(patch("/point/{id}/charge", userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(amount)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.userId").value(userId))
+            .andExpect(jsonPath("$.amount").value(amount))
+            .andExpect(jsonPath("$.prPoint").value(point))
+            .andExpect(jsonPath("$.userPoint").value(point+amount));
+    }
+
+    //충전을 시도하는 금액이 양의 정수가 아닐 때에 대한 테스트
+    @Test
+    @DisplayName("포인트 충전 - 양의 정수 이외 테스트")
+    void chargePointAPIParameterExceptionTest() throws Exception {
+        mockMvc.perform(patch("/point/{id}/charge", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(-100)))
+                .andExpect(status().is5xxServerError());
+
+        mockMvc.perform(patch("/point/{id}/charge", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(0)))
+                .andExpect(status().is5xxServerError());
+
+    }
+
+    //userId의 자료형(long)이외 값에 대한 예외 처리
+    //원래는 CustomException을 Throw하고 싶었으나 시간상 예외에 대한 테스트만 구현
+    @Test
+    @DisplayName("포인트 충전 - 서비스 내부 update Exception 테스트")
+    void chargePointAPIExceptionTest() throws Exception {
+        doThrow(new CustomException(ErrorCode.INTERNAL_SERVER_ERROR))
+            .when(pointHistoryRepository).save(anyLong(), anyLong(), any(TransactionType.class));
+
+        mockMvc.perform(patch("/point/{id}/charge", userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(-100)))
+            .andExpect(status().is5xxServerError());
     }
 
 
