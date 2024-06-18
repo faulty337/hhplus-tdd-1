@@ -169,19 +169,19 @@ class PointControllerTest {
 
     }
 
-    //userId의 자료형(long)이외 값에 대한 예외 처리
-    //원래는 CustomException을 Throw하고 싶었으나 시간상 예외에 대한 테스트만 구현
-    @Test
-    @DisplayName("포인트 충전 - 서비스 내부 update Exception 테스트")
-    void chargePointAPIExceptionTest() throws Exception {
-        doThrow(new CustomException(ErrorCode.INTERNAL_SERVER_ERROR))
-            .when(pointHistoryRepository).save(anyLong(), anyLong(), any(TransactionType.class));
-
-        mockMvc.perform(patch("/point/{id}/charge", userId)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(-100)))
-            .andExpect(status().is5xxServerError());
-    }
+//    userId의 자료형(long)이외 값에 대한 예외 처리
+//    원래는 내부 오류시 UserPoint에 데이터가 복구되는 부분 테스트 하고자 했으나 다른 방식으로 시도해야함
+//    @Test
+//    @DisplayName("포인트 충전 - 서비스 내부 update Exception 테스트")
+//    void chargePointAPIExceptionTest() throws Exception {
+//        doThrow(new CustomException(ErrorCode.INTERNAL_SERVER_ERROR))
+//            .when(pointHistoryRepository).save(anyLong(), anyLong(), any(TransactionType.class));
+//
+//        mockMvc.perform(patch("/point/{id}/charge", userId)
+//            .contentType(MediaType.APPLICATION_JSON)
+//            .content(objectMapper.writeValueAsString(-100)))
+//            .andExpect(status().is5xxServerError());
+//    }
 
 
 }

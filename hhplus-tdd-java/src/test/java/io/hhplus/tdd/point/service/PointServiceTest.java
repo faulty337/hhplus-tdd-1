@@ -104,6 +104,7 @@ class PointServiceTest {
 
     }
 
+    //기본 포인트 충전 작동 테스트
     @Test
     @DisplayName("포인트 충전 - 서비스 로직 작동 테스트")
     void chargePointSuccessTest() {
@@ -123,6 +124,7 @@ class PointServiceTest {
         verify(pointHistoryRepository, times(1)).save(userId, amount, TransactionType.CHARGE);
     }
 
+    //0 혹은 음수에 대한 충전 시도 시 특정 예외를 터트리는 지에 대한 테스트
     @Test
     @DisplayName("포인트 충전 - 양의 정수 이외 예외 테스트")
     void chargePointParameterExceptionTest() {
@@ -139,6 +141,7 @@ class PointServiceTest {
         });
     }
 
+    //포인트 충전 시도시 없는 유저에 대해 시도시 예외를 터트리는 지에 대한 테스트
     @Test
     @DisplayName("포인트 충전 - Not Found UserId Exception 테스트")
     void chargePointNotFoundUserExceptionTest() {
@@ -150,16 +153,17 @@ class PointServiceTest {
         });
     }
 
-    @Test
-    @DisplayName("포인트 충전 - Not Found UserId Exception 테스트")
-    void chargePointRollBackExceptionTest() {
-
-        when(userPointRepository.findById(userId)).thenReturn(Optional.empty());
-
-        assertThrows(CustomException.class, () ->{
-            pointService.chargePoint(userId, amount);
-        });
-    }
+    //원래는 중간에 오류가 생겼을 시 데이터를 원복 시키는지에 대한 테스트를 진행하고자 했음
+//    @Test
+//    @DisplayName("포인트 충전 - RollBack 테스트")
+//    void chargePointRollBackExceptionTest() {
+//
+//        when(userPointRepository.findById(userId)).thenReturn(Optional.empty());
+//
+//        assertThrows(CustomException.class, () ->{
+//            pointService.chargePoint(userId, amount);
+//        });
+//    }
 
 
 
