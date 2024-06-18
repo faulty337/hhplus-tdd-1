@@ -9,6 +9,7 @@ import io.hhplus.tdd.point.UserPoint;
 import io.hhplus.tdd.point.dto.PointHistoryResponse;
 import io.hhplus.tdd.point.dto.UserPointChargeResponse;
 import io.hhplus.tdd.point.dto.UserPointResponse;
+import io.hhplus.tdd.point.dto.UserPointUseResponse;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
 import org.springframework.stereotype.Service;
@@ -69,5 +70,27 @@ public class PointServiceImpl implements PointService {
             userPointRepository.update(userId, prPoint);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public UserPointUseResponse usePoint(long userId, long amount) {
+        UserPoint userPoint = userPointRepository.findById(userId).orElseThrow(
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND)
+        );
+        long prPoint = userPoint.point();
+        if(prPoint < amount){
+            throw new CustomException(ErrorCode.INSUFFICIENT_FUNDS);
+        }
+
+        try {
+            userPoint = userPointRepository.update(userId, prPoint - amount);
+            pointHistoryRepository.save(userId, amount, TransactionType.USE);
+            return new UserPointUseResponse(userId, amount, userPoint.point());
+        } catch (Exception e) {
+            //Transaction이 없기에 임시 처리
+            userPointRepository.update(userId, prPoint);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+
     }
 }
