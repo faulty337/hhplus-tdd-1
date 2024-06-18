@@ -3,8 +3,11 @@ package io.hhplus.tdd.point.service;
 
 import io.hhplus.tdd.CustomException;
 import io.hhplus.tdd.ErrorCode;
+import io.hhplus.tdd.point.PointHistory;
+import io.hhplus.tdd.point.TransactionType;
 import io.hhplus.tdd.point.UserPoint;
 import io.hhplus.tdd.point.dto.PointHistoryResponse;
+import io.hhplus.tdd.point.dto.UserPointChargeResponse;
 import io.hhplus.tdd.point.dto.UserPointResponse;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
@@ -43,5 +46,28 @@ public class PointServiceImpl implements PointService {
                         pointHistory.type(),
                         pointHistory.updateMillis())
         ).toList();
+    }
+
+    @Override
+    public UserPointChargeResponse chargePoint(long userId, long amount) {
+        if(amount <= 0){
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+        //유효성 검증
+        UserPoint userpoint = userPointRepository.findById(userId).orElseThrow(
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND)
+        );
+        long prPoint = userpoint.point();
+
+        try {
+            userpoint = userPointRepository.update(userId, prPoint + amount);
+            pointHistoryRepository.save(userId, amount, TransactionType.CHARGE);
+
+            return new UserPointChargeResponse(userId, userpoint.point(), prPoint, amount);
+        } catch (Exception e) {
+            //Transaction이 없기에 임시 처리
+            userPointRepository.update(userId, prPoint);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 }
