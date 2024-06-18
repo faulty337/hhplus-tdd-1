@@ -73,7 +73,7 @@ class PointControllerTest {
         userPoint = new UserPoint(userId, point);
         when(userPointRepository.findById(userId)).thenReturn(Optional.of(userPoint));
         when(pointHistoryRepository.findAllByUserId(userId)).thenReturn(pointHistoryList);
-        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(Optional.of(pointHistory));
+        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(pointHistory);
         when(userPointRepository.update(userId, point + amount)).thenReturn(new UserPoint(userId, point + amount));
 
 

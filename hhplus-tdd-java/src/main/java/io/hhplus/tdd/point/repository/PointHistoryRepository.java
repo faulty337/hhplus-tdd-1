@@ -10,6 +10,6 @@ public interface PointHistoryRepository {
 
     List<PointHistory> findAllByUserId(long userId);
 
-    Optional<PointHistory> save(long userid, long amount, TransactionType type);
+    PointHistory save(long userid, long amount, TransactionType type);
 
 }
