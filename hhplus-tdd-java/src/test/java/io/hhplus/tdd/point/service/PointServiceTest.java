@@ -201,13 +201,29 @@ class PointServiceTest {
 
     // 유저를 못찾았을 때에 대한 예외 테스트
     @Test
-    @DisplayName("포인트 충전 - Not Found UserId Exception 테스트")
+    @DisplayName("포인트 사용 - Not Found UserId Exception 테스트")
     void usePointNotFoundUserExceptionTest() {
 
         when(userPointRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThrows(CustomException.class, () ->{
             pointService.usePoint(userId, amount);
+        });
+    }
+
+    @Test
+    @DisplayName("포인트 사용 - 양의 정수 이외 예외 테스트")
+    void usePointParameterExceptionTest() {
+
+        long minus = -100L;
+        long zero = 0L;
+
+        assertThrows(CustomException.class, () ->{
+            pointService.chargePoint(userId, minus);
+        });
+
+        assertThrows(CustomException.class, () ->{
+            pointService.chargePoint(userId, zero);
         });
     }
 

@@ -79,7 +79,10 @@ public class PointServiceImpl implements PointService {
         );
         long prPoint = userPoint.point();
         if(prPoint < amount){
-            throw new CustomException(ErrorCode.INSUFFICIENT_FUNDS);
+            throw new CustomException(ErrorCode.OVERUSE);
+        }
+        if(amount <= 0){
+            throw new CustomException(ErrorCode.INVALID_INPUT);
         }
 
         try {
