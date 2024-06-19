@@ -7,6 +7,7 @@ import io.hhplus.tdd.point.UserPoint;
 import io.hhplus.tdd.point.dto.PointHistoryResponse;
 import io.hhplus.tdd.point.dto.UserPointChargeResponse;
 import io.hhplus.tdd.point.dto.UserPointResponse;
+import io.hhplus.tdd.point.dto.UserPointUseResponse;
 import io.hhplus.tdd.point.repository.PointHistoryRepositoryImpl;
 import io.hhplus.tdd.point.repository.UserPointRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +46,7 @@ class PointServiceTest {
     void setUp() {
         userId = 1L;
         point = 100L;
-        amount = 20;
+        amount = 20L;
         userPoint = new UserPoint(userId, point);
         int i = 0;
         for(; i < 5; i++){
@@ -166,5 +167,48 @@ class PointServiceTest {
 //    }
 
 
+    //기본 포인트 사용 테스트
+    @Test
+    @DisplayName("포인트 사용 - 서비스 로직 작동 테스트")
+    void usePointSuccessTest() {
+
+        UserPoint afterUserPoint = new UserPoint(userId, point -amount , System.currentTimeMillis());
+
+        when(userPointRepository.findById(userId)).thenReturn(Optional.of(userPoint));
+        when(userPointRepository.update(userId, point - amount)).thenReturn(afterUserPoint);
+        when(pointHistoryRepository.save(userId, amount, TransactionType.USE)).thenReturn(chargePointHistory);
+
+        UserPointUseResponse response = pointService.usePoint(userId, amount);
+
+        assertNotNull(response);
+
+        verify(userPointRepository, times(1)).findById(userId);
+        verify(userPointRepository, times(1)).update(userId, point - amount);
+        verify(pointHistoryRepository, times(1)).save(userId, amount, TransactionType.USE);
+    }
+
+    //보유 포인트보다 초과되는 사용 요청에 대한 예외 테스트
+    @Test
+    @DisplayName("포인트 사용 - 초과 사용 예외 테스트")
+    void usePointOveruseTest() {
+        long overAmount = userId + 1;
+
+        assertThrows(CustomException.class, () ->{
+            pointService.usePoint(userId, overAmount);
+        });
+    }
+
+
+    // 유저를 못찾았을 때에 대한 예외 테스트
+    @Test
+    @DisplayName("포인트 충전 - Not Found UserId Exception 테스트")
+    void usePointNotFoundUserExceptionTest() {
+
+        when(userPointRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThrows(CustomException.class, () ->{
+            pointService.usePoint(userId, amount);
+        });
+    }
 
 }
