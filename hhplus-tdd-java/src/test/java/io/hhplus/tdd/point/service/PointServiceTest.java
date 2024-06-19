@@ -204,8 +204,6 @@ class PointServiceTest {
     @DisplayName("포인트 사용 - Not Found UserId Exception 테스트")
     void usePointNotFoundUserExceptionTest() {
 
-        when(userPointRepository.findById(userId)).thenReturn(Optional.empty());
-
         assertThrows(CustomException.class, () ->{
             pointService.usePoint(userId, amount);
         });

@@ -3,12 +3,11 @@ package io.hhplus.tdd.point.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.hhplus.tdd.CustomException;
 import io.hhplus.tdd.ErrorCode;
-import io.hhplus.tdd.point.PointHistory;
-import io.hhplus.tdd.point.TransactionType;
-import io.hhplus.tdd.point.UserPoint;
+import io.hhplus.tdd.point.*;
 import io.hhplus.tdd.point.dto.UserPointChargeResponse;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,51 +32,52 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(TestConfig.class)
 class PointControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private UserPointRepository userPointRepository;
+    @Autowired
+    private UserPointTestRepository userPointRepository;
 
-    @MockBean
-    private PointHistoryRepository pointHistoryRepository;
+    @Autowired
+    private PointHistoryTestRepository pointHistoryRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    private long userId;
+    private static long userId;
 
-    private long point;
+    private static long point;
 
-    private long amount;
+    private static long amount;
 
     private final List<PointHistory> pointHistoryList = new ArrayList<>();
 
-    private UserPointChargeResponse userPointChargeResponse;
 
     private UserPoint userPoint;
 
     private PointHistory pointHistory;
 
-    @BeforeEach
-    public void setUP(){
+    @BeforeAll
+    public static void setUP(){
         userId = 1L;
         point = 100L;
         amount = 20L;
-        for(int i = 0; i < 5; i++){
-            pointHistoryList.add(new PointHistory(i, userId, 20, TransactionType.CHARGE, System.currentTimeMillis()));
-        }
+    }
 
+    @BeforeEach
+    void setTable(){
+        userPointRepository.clear();
+        pointHistoryRepository.clear();
 
-        userPoint = new UserPoint(userId, point);
-        when(userPointRepository.findById(userId)).thenReturn(Optional.of(userPoint));
-        when(pointHistoryRepository.findAllByUserId(userId)).thenReturn(pointHistoryList);
-
-
-
-
+        userPointRepository.save(new UserPoint(userId, point));
+        pointHistoryRepository.save(userId, 20, TransactionType.CHARGE);
+        pointHistoryRepository.save(userId, 20, TransactionType.CHARGE);
+        pointHistoryRepository.save(userId, 20, TransactionType.CHARGE);
+        pointHistoryRepository.save(userId, 20, TransactionType.CHARGE);
+        pointHistoryRepository.save(userId, 20, TransactionType.CHARGE);
     }
 
 
@@ -84,6 +85,8 @@ class PointControllerTest {
     @Test
     @DisplayName("포인트 조회 - 작동 테스트")
     void pointAPISuccessTest() throws Exception {
+
+        userPointRepository.save(new UserPoint(userId, point));
 
         mockMvc.perform(get("/point/{id}", userId))
                 .andExpect(status().isOk())
@@ -110,8 +113,6 @@ class PointControllerTest {
     void pointAPINotFoundUserIdExceptionTest() throws Exception {
         long nonUserId = 999L;
 
-        when(userPointRepository.findById(nonUserId)).thenReturn(Optional.empty());
-
         mockMvc.perform(get("/point/{id}", nonUserId))
                 .andExpect(status().is5xxServerError());
     }
@@ -121,13 +122,12 @@ class PointControllerTest {
     @DisplayName("포인트 로그 조회 - 작동 테스트")
     void pointHistoryAPISuccessTest() throws Exception {
 
-        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(pointHistory);
 
         mockMvc.perform(get("/point/{id}/histories", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(pointHistoryList.size()))
                 .andExpect(jsonPath("$[0].userId").value(userId))
-                .andExpect(jsonPath("$[0].amount").value(20));
+                .andExpect(jsonPath("$[0].amount").value(point + amount));
     }
 
     //userId의 자료형(long)이외 값에 대한 예외 처리
@@ -147,8 +147,8 @@ class PointControllerTest {
 
         pointHistory = new PointHistory(1L, userId, amount, TransactionType.CHARGE, System.currentTimeMillis());
 
-        when(userPointRepository.update(userId, point + amount)).thenReturn(new UserPoint(userId, point + amount));
-        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(pointHistory);
+//        when(userPointRepository.update(userId, point + amount)).thenReturn(new UserPoint(userId, point + amount));
+//        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(pointHistory);
 
         mockMvc.perform(patch("/point/{id}/charge", userId)
             .contentType(MediaType.APPLICATION_JSON)
@@ -199,8 +199,8 @@ class PointControllerTest {
 
         pointHistory = new PointHistory(1L, userId, amount, TransactionType.USE, System.currentTimeMillis());
 
-        when(pointHistoryRepository.save(userId, amount, TransactionType.USE)).thenReturn(pointHistory);
-        when(userPointRepository.update(userId, point - amount)).thenReturn(new UserPoint(userId, point - amount));
+//        when(pointHistoryRepository.save(userId, amount, TransactionType.USE)).thenReturn(pointHistory);
+//        when(userPointRepository.update(userId, point - amount)).thenReturn(new UserPoint(userId, point - amount));
 
         System.out.println(point + " " + amount + " " + (point-amount));
         mockMvc.perform(patch("/point/{id}/use", userId)
@@ -218,8 +218,8 @@ class PointControllerTest {
     void usePointAPIInsufficientTest() throws Exception {
         pointHistory = new PointHistory(1L, userId, amount, TransactionType.USE, System.currentTimeMillis());
 
-        when(pointHistoryRepository.save(userId, amount, TransactionType.USE)).thenReturn(pointHistory);
-        when(userPointRepository.update(userId, point - amount)).thenReturn(new UserPoint(userId, point - amount));
+//        when(pointHistoryRepository.save(userId, amount, TransactionType.USE)).thenReturn(pointHistory);
+//        when(userPointRepository.update(userId, point - amount)).thenReturn(new UserPoint(userId, point - amount));
 
         mockMvc.perform(patch("/point/{id}/use", userId)
                         .contentType(MediaType.APPLICATION_JSON)
