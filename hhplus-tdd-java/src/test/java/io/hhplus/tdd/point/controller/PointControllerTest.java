@@ -68,13 +68,13 @@ class PointControllerTest {
         for(int i = 0; i < 5; i++){
             pointHistoryList.add(new PointHistory(i, userId, 20, TransactionType.CHARGE, System.currentTimeMillis()));
         }
-        pointHistory = new PointHistory(1L, userId, amount, TransactionType.CHARGE, System.currentTimeMillis());
-        userPointChargeResponse = new UserPointChargeResponse(userId, 100, 80, 20);
+
+
         userPoint = new UserPoint(userId, point);
         when(userPointRepository.findById(userId)).thenReturn(Optional.of(userPoint));
         when(pointHistoryRepository.findAllByUserId(userId)).thenReturn(pointHistoryList);
-        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(pointHistory);
-        when(userPointRepository.update(userId, point + amount)).thenReturn(new UserPoint(userId, point + amount));
+
+
 
 
     }
@@ -121,6 +121,8 @@ class PointControllerTest {
     @DisplayName("포인트 로그 조회 - 작동 테스트")
     void pointHistoryAPISuccessTest() throws Exception {
 
+        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(pointHistory);
+
         mockMvc.perform(get("/point/{id}/histories", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(pointHistoryList.size()))
@@ -143,6 +145,11 @@ class PointControllerTest {
     @DisplayName("포인트 충전 - 작동 테스트")
     void chargePointAPISuccessTest() throws Exception {
 
+        pointHistory = new PointHistory(1L, userId, amount, TransactionType.CHARGE, System.currentTimeMillis());
+
+        when(userPointRepository.update(userId, point + amount)).thenReturn(new UserPoint(userId, point + amount));
+        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(pointHistory);
+
         mockMvc.perform(patch("/point/{id}/charge", userId)
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(amount)))
@@ -157,6 +164,7 @@ class PointControllerTest {
     @Test
     @DisplayName("포인트 충전 - 양의 정수 이외 테스트")
     void chargePointAPIParameterExceptionTest() throws Exception {
+
         mockMvc.perform(patch("/point/{id}/charge", userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(-100)))
@@ -182,6 +190,44 @@ class PointControllerTest {
 //            .content(objectMapper.writeValueAsString(-100)))
 //            .andExpect(status().is5xxServerError());
 //    }
+
+
+    // 기본 API 작동 테스트
+    @Test
+    @DisplayName("포인트 사용 - 작동 테스트")
+    void usePointAPISuccessTest() throws Exception {
+
+        pointHistory = new PointHistory(1L, userId, amount, TransactionType.USE, System.currentTimeMillis());
+
+        when(pointHistoryRepository.save(userId, amount, TransactionType.USE)).thenReturn(pointHistory);
+        when(userPointRepository.update(userId, point - amount)).thenReturn(new UserPoint(userId, point - amount));
+
+        System.out.println(point + " " + amount + " " + (point-amount));
+        mockMvc.perform(patch("/point/{id}/use", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(amount)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(userId))
+                .andExpect(jsonPath("$.amount").value(amount))
+                .andExpect(jsonPath("$.point").value(point-amount));
+    }
+
+    //초과 금액 사용 시도시 예외 테스트
+    @Test
+    @DisplayName("포인트 사용 - 초과 테스트")
+    void usePointAPIInsufficientTest() throws Exception {
+        pointHistory = new PointHistory(1L, userId, amount, TransactionType.USE, System.currentTimeMillis());
+
+        when(pointHistoryRepository.save(userId, amount, TransactionType.USE)).thenReturn(pointHistory);
+        when(userPointRepository.update(userId, point - amount)).thenReturn(new UserPoint(userId, point - amount));
+
+        mockMvc.perform(patch("/point/{id}/use", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(point + 1)))
+                .andExpect(status().isInternalServerError());
+    }
+
+
 
 
 }

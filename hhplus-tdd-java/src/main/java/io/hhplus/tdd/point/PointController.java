@@ -3,6 +3,7 @@ package io.hhplus.tdd.point;
 import io.hhplus.tdd.point.dto.PointHistoryResponse;
 import io.hhplus.tdd.point.dto.UserPointChargeResponse;
 import io.hhplus.tdd.point.dto.UserPointResponse;
+import io.hhplus.tdd.point.dto.UserPointUseResponse;
 import io.hhplus.tdd.point.service.PointService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,10 +59,11 @@ public class PointController {
      * TODO - 특정 유저의 포인트를 사용하는 기능을 작성해주세요.
      */
     @PatchMapping("{id}/use")
-    public UserPoint use(
+    public UserPointUseResponse use(
             @PathVariable long id,
             @RequestBody long amount
     ) {
-        return new UserPoint(0, 0, 0);
+
+        return pointService.usePoint(id, amount);
     }
 }
