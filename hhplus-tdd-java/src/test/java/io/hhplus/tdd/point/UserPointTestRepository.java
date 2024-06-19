@@ -12,7 +12,7 @@ public class UserPointTestRepository implements UserPointRepository {
 
     @Override
     public Optional<UserPoint> findById(long id) {
-        return Optional.of(table.getOrDefault(id, UserPoint.empty(id)));
+        return Optional.ofNullable(table.get(id));
     }
 
     @Override

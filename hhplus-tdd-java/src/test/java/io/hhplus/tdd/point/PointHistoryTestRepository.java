@@ -20,4 +20,13 @@ public class PointHistoryTestRepository implements PointHistoryRepository {
         table.add(pointHistory);
         return pointHistory;
     }
+
+    public boolean clear(){
+        try{
+            table.clear();
+        }catch (Exception e){
+            return false;
+        }
+        return true;
+    }
 }
