@@ -129,6 +129,9 @@ class PointServiceTest {
 
         // then
         assertNotNull(response);
+        assertEquals(response.prPoint(), point);
+        assertEquals(response.userPoint(), point + amount);
+        assertEquals(response.amount(),  amount);
         then(userPointRepository).should(times(1)).findById(userId);
         then(userPointRepository).should(times(1)).update(userId, point + amount);
         then(pointHistoryRepository).should(times(1)).save(userId, amount, TransactionType.CHARGE);
@@ -180,6 +183,9 @@ class PointServiceTest {
 
         // then
         assertNotNull(response);
+        assertEquals(response.point(), point - amount);
+        assertEquals(response.userId(), userId);
+        assertEquals(response.amount(), amount);
         then(userPointRepository).should(times(1)).findById(userId);
         then(userPointRepository).should(times(1)).update(userId, point - amount);
         then(pointHistoryRepository).should(times(1)).save(userId, amount, TransactionType.USE);
