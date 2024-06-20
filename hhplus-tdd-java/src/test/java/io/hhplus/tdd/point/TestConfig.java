@@ -1,5 +1,6 @@
 package io.hhplus.tdd.point;
 
+import io.hhplus.tdd.ConcurrentManager;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
 import io.hhplus.tdd.point.service.PointService;
@@ -22,8 +23,16 @@ public class TestConfig {
     }
 
     @Bean
+    public ConcurrentManager concurrentManager(){
+        return new ConcurrentManager();
+    }
+
+    @Bean
     @Primary
-    public PointService pointService(UserPointRepository userPointRepository, PointHistoryRepository pointHistoryRepository) {
-        return new PointServiceImpl(userPointRepository, pointHistoryRepository);
+    public PointService pointService(UserPointRepository userPointRepository,
+                                     PointHistoryRepository pointHistoryRepository,
+                                     ConcurrentManager concurrentManager
+    ) {
+        return new PointServiceImpl(userPointRepository, pointHistoryRepository, concurrentManager);
     }
 }
