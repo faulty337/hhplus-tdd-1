@@ -89,7 +89,7 @@ class PointControllerTest {
     void pointAPIParameterExceptionTest() throws Exception {
         String userId = "테스트";
         mockMvc.perform(get("/point/{id}", userId))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isBadRequest());
     }
 
     //없는 userId에 대한 예외 처리
@@ -101,7 +101,8 @@ class PointControllerTest {
         long nonUserId = 999L;
 
         mockMvc.perform(get("/point/{id}", nonUserId))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value(ErrorCode.USER_NOT_FOUND.getMsg()));
     }
 
     //기본 API 작동 테스트
@@ -149,13 +150,26 @@ class PointControllerTest {
         mockMvc.perform(patch("/point/{id}/charge", userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(-100)))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isInternalServerError());
 
         mockMvc.perform(patch("/point/{id}/charge", userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(0)))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_INPUT.getMsg()));
 
+    }
+
+    @Test
+    @DisplayName("포인트 충전 - 없는 사용자 테스트")
+    void chargePointAPINotFoundUserIdExceptionTest() throws Exception {
+        long nonUserId = 999L;
+
+        mockMvc.perform(patch("/point/{id}/charge", nonUserId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(amount)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value(ErrorCode.USER_NOT_FOUND.getMsg()));
     }
 
 //    userId의 자료형(long)이외 값에 대한 예외 처리
@@ -195,9 +209,22 @@ class PointControllerTest {
         mockMvc.perform(patch("/point/{id}/use", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(point + 1)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value(ErrorCode.OVERUSE.getMsg()));
     }
 
+
+    @Test
+    @DisplayName("포인트 사용 - 없는 사용자 테스트")
+    void usePointAPINotFoundUserIdExceptionTest() throws Exception {
+        long nonUserId = 999L;
+
+        mockMvc.perform(patch("/point/{id}/use", nonUserId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(amount)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value(ErrorCode.USER_NOT_FOUND.getMsg()));
+    }
 
 
 
