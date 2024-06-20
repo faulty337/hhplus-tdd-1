@@ -1,6 +1,7 @@
 package io.hhplus.tdd.point.service;
 
 
+import io.hhplus.tdd.ConcurrentManager;
 import io.hhplus.tdd.CustomException;
 import io.hhplus.tdd.ErrorCode;
 import io.hhplus.tdd.point.PointHistory;
@@ -21,10 +22,12 @@ public class PointServiceImpl implements PointService {
 
     private final UserPointRepository userPointRepository;
     private final PointHistoryRepository pointHistoryRepository;
+    private final ConcurrentManager concurrentManager;
 
-    public PointServiceImpl(UserPointRepository userPointRepository, PointHistoryRepository pointHistoryRepository) {
+    public PointServiceImpl(UserPointRepository userPointRepository, PointHistoryRepository pointHistoryRepository, ConcurrentManager concurrentManager) {
         this.userPointRepository = userPointRepository;
         this.pointHistoryRepository = pointHistoryRepository;
+        this.concurrentManager = concurrentManager;
     }
 
 
@@ -51,6 +54,11 @@ public class PointServiceImpl implements PointService {
 
     @Override
     public UserPointChargeResponse chargePoint(long userId, long amount) {
+        if(concurrentManager.waitOperation(userId, 100)){
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        };
+        concurrentManager.startOperation(userId);
+
         if(amount <= 0){
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
@@ -64,16 +72,27 @@ public class PointServiceImpl implements PointService {
             userpoint = userPointRepository.update(userId, prPoint + amount);
             pointHistoryRepository.save(userId, amount, TransactionType.CHARGE);
 
+            concurrentManager.endOperation(userId);
+
             return new UserPointChargeResponse(userId, userpoint.point(), prPoint, amount);
         } catch (Exception e) {
             //Transaction이 없기에 임시 처리
             userPointRepository.update(userId, prPoint);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
+
+
+
     }
 
     @Override
     public UserPointUseResponse usePoint(long userId, long amount) {
+
+        if(concurrentManager.waitOperation(userId, 100)){
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        };
+        concurrentManager.startOperation(userId);
+
         UserPoint userPoint = userPointRepository.findById(userId).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );
@@ -88,6 +107,9 @@ public class PointServiceImpl implements PointService {
         try {
             userPoint = userPointRepository.update(userId, prPoint - amount);
             pointHistoryRepository.save(userId, amount, TransactionType.USE);
+
+            concurrentManager.endOperation(userId);
+
             return new UserPointUseResponse(userId, amount, userPoint.point());
         } catch (Exception e) {
             //Transaction이 없기에 임시 처리
