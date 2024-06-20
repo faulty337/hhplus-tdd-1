@@ -19,14 +19,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -53,12 +46,6 @@ class PointControllerTest {
 
     private static long amount;
 
-    private final List<PointHistory> pointHistoryList = new ArrayList<>();
-
-
-    private UserPoint userPoint;
-
-    private PointHistory pointHistory;
 
     @BeforeAll
     public static void setUP(){
@@ -121,13 +108,12 @@ class PointControllerTest {
     @Test
     @DisplayName("포인트 로그 조회 - 작동 테스트")
     void pointHistoryAPISuccessTest() throws Exception {
-
-
+        int size = pointHistoryRepository.findAllByUserId(userId).size();
         mockMvc.perform(get("/point/{id}/histories", userId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(pointHistoryList.size()))
+                .andExpect(jsonPath("$.size()").value(size))
                 .andExpect(jsonPath("$[0].userId").value(userId))
-                .andExpect(jsonPath("$[0].amount").value(point + amount));
+                .andExpect(jsonPath("$[0].amount").value(amount));
     }
 
     //userId의 자료형(long)이외 값에 대한 예외 처리
@@ -144,11 +130,6 @@ class PointControllerTest {
     @Test
     @DisplayName("포인트 충전 - 작동 테스트")
     void chargePointAPISuccessTest() throws Exception {
-
-        pointHistory = new PointHistory(1L, userId, amount, TransactionType.CHARGE, System.currentTimeMillis());
-
-//        when(userPointRepository.update(userId, point + amount)).thenReturn(new UserPoint(userId, point + amount));
-//        when(pointHistoryRepository.save(userId, amount, TransactionType.CHARGE)).thenReturn(pointHistory);
 
         mockMvc.perform(patch("/point/{id}/charge", userId)
             .contentType(MediaType.APPLICATION_JSON)
@@ -197,12 +178,6 @@ class PointControllerTest {
     @DisplayName("포인트 사용 - 작동 테스트")
     void usePointAPISuccessTest() throws Exception {
 
-        pointHistory = new PointHistory(1L, userId, amount, TransactionType.USE, System.currentTimeMillis());
-
-//        when(pointHistoryRepository.save(userId, amount, TransactionType.USE)).thenReturn(pointHistory);
-//        when(userPointRepository.update(userId, point - amount)).thenReturn(new UserPoint(userId, point - amount));
-
-        System.out.println(point + " " + amount + " " + (point-amount));
         mockMvc.perform(patch("/point/{id}/use", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(amount)))
@@ -216,10 +191,6 @@ class PointControllerTest {
     @Test
     @DisplayName("포인트 사용 - 초과 테스트")
     void usePointAPIInsufficientTest() throws Exception {
-        pointHistory = new PointHistory(1L, userId, amount, TransactionType.USE, System.currentTimeMillis());
-
-//        when(pointHistoryRepository.save(userId, amount, TransactionType.USE)).thenReturn(pointHistory);
-//        when(userPointRepository.update(userId, point - amount)).thenReturn(new UserPoint(userId, point - amount));
 
         mockMvc.perform(patch("/point/{id}/use", userId)
                         .contentType(MediaType.APPLICATION_JSON)
