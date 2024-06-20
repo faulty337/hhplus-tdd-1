@@ -52,19 +52,31 @@ public class ConcurrencyTest {
     void chargePointConcurrencyTest() {
         long amount1 = 100;
         long amount2 = 200;
-        long amount3 = 300;
-        long amount4 = 400;
 
         CompletableFuture.allOf(
                 CompletableFuture.runAsync(() -> pointService.chargePoint(userId, amount1)),
                 CompletableFuture.runAsync(() -> pointService.chargePoint(userId, amount2))
-//                CompletableFuture.runAsync(() -> pointService.chargePoint(userId, amount3)),
-//                CompletableFuture.runAsync(() -> pointService.chargePoint(userId, amount4))
         ).join();
 
         UserPoint userPoint = userPointRepository.findById(userId).orElseThrow();
 
-        assertEquals(userPoint.point(), point + amount2 + amount1);
+        assertEquals(point + amount2 + amount1, userPoint.point());
+
+    }
+
+    @Test
+    void usePointConcurrencyTest() {
+        long amount1 = 100;
+        long amount2 = 200;
+
+        CompletableFuture.allOf(
+                CompletableFuture.runAsync(() -> pointService.usePoint(userId, amount1)),
+                CompletableFuture.runAsync(() -> pointService.usePoint(userId, amount2))
+        ).join();
+
+        UserPoint userPoint = userPointRepository.findById(userId).orElseThrow();
+
+        assertEquals(point - amount2 - amount1, userPoint.point());
 
     }
 }
